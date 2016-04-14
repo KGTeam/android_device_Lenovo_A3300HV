@@ -1,6 +1,10 @@
 # inherit from the proprietary version
 -include vendor/Lenovo/A3300HV/BoardConfigVendor.mk
 
+# GPS
+TARGET_SPECIFIC_HEADER_PATH := device/Lenovo/A3300HV/include
+
+
 LOCAL_PATH := device/Lenovo/A3300HV
 
 # Board
