@@ -25,6 +25,9 @@ on fs
     write /proc/bootprof "INIT:eMMC:Mount_All_START"
     mount_all /fstab.mt6582
     write /proc/bootprof "INIT:eMMC:Mount_All_END"
+	
+    mkdir /data/agps_supl 0771 gps system
+    mkdir /data/gps_mnl 0771 gps system
 
 # mount different fs end
 
@@ -469,10 +472,6 @@ on post-fs-data
 # Connectivity related device nodes & configuration (begin)
 #
 
-#/dev/ttyMT2 for Connectivity BT/FM/GPS usage
-    chmod 0660 /dev/ttyMT2
-    chown system system /dev/ttyMT2
-
 # GPS
     chown gps gps /sys/devices/virtual/gpsdrv/gps/pwrctl
     chown gps gps /sys/devices/virtual/gpsdrv/gps/suspend
@@ -485,11 +484,6 @@ on post-fs-data
 # Connectivity related device nodes & configuration (end)
 #
 
-# AGPS
-    mkdir /data/agps_supl 0771 gps system
-
-# GPS
-    mkdir /data/gps_mnl 0771 gps system
 
 # Encrypt phone function
     setprop vold.post_fs_data_done 1
@@ -543,6 +537,16 @@ on boot
 
 # AGPS
     mkdir /data/agps_supl 0771 gps system
+
+# GPS
+    chmod 0666 /dev/gps
+    chmod 0660 /dev/stpgps
+    chown gps gps /dev/stpgps
+    chown gps gps /sys/class/gpsdrv/gps/pwrctl
+    chown gps gps /sys/class/gpsdrv/gps/suspend
+    chown gps gps /sys/class/gpsdrv/gps/state
+    chown gps gps /sys/class/gpsdrv/gps/pwrsave
+    chown gps gps /sys/class/gpsdrv/gps/status	
 
 ## Thermal
   #change permissions on thermal devices
@@ -763,7 +767,7 @@ service drvbd /system/bin/drvbd
 service nvram_daemon /system/bin/nvram_daemon
     class main
     user root
-    group nvram system
+    group system root
     oneshot
 
 service NvRAMAgent /system/bin/nvram_agent_binder
@@ -786,17 +790,19 @@ service bluetoothd /system/bin/bluetoothd -n
 service agpsd /system/bin/mtk_agpsd
     class main
     socket agpsd stream 660 gps system
-    socket agpsd2 stream 660 gps inet
-    socket agpsd3 stream 660 gps inet
-    user gps
-    group gps inet sdcard_r sdcard_rw misc radio
+	socket agpsd2 stream 660 gps system
+	socket agpsd3 stream 660 gps system
+	user root
+	group gps ccci inet sdcard_r sdcard_rw misc
+	oneshot
 
 service mnld /system/xbin/mnld
     class main
-    user gps
+    user root
     group system gps inet misc sdcard_rw sdcard_r media_rw
     socket mnld stream 660 gps system
-    
+    oneshot
+	
 service mdlogger /system/bin/mdlogger
     class main
     user shell
@@ -804,6 +810,18 @@ service mdlogger /system/bin/mdlogger
     disabled
     oneshot
 
+service wifi2agps /system/bin/wifi2agps
+	class main
+	user root
+	group gps inet
+	oneshot
+	
+service BGW /system/xbin/BGW
+	user root
+	group gps system radio
+	class main
+	oneshot
+	
 service dualmdlogger /system/bin/dualmdlogger
     class main
     user shell
@@ -890,6 +908,34 @@ service lsm303md /system/bin/lsm303md
 #
 #sensor service (end)
 #
+
+service agpsd /system/bin/mtk_agpsd
+    class main
+    socket agpsd stream 660 gps system
+    socket agpsd2 stream 660 gps system
+    socket agpsd3 stream 660 gps system
+    user root
+    group gps ccci inet sdcard_r sdcard_rw misc
+    oneshot
+	
+service mnld /system/xbin/mnld
+    class main
+    user root
+    group system gps inet misc sdcard_rw sdcard_r media_rw
+    socket mnld stream 660 gps system
+    oneshot
+	
+service wifi2agps /system/bin/wifi2agps
+    class main
+    user root
+    group gps inet
+    oneshot
+	
+service BGW /system/xbin/BGW
+    user root
+    group gps system radio
+    class main
+    oneshot
 
 service shutdown /system/bin/shutdown
     user root
